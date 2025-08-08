@@ -35,16 +35,30 @@ function App() {
   const [board, setBoard] = useState<Board>(Array(9).fill(null))
   const [current, setCurrent] = useState<Player>('X')
   const [messages, setMessages] = useState<string[]>([])
+  const [isThinking, setIsThinking] = useState<boolean>(false)
   const winner = useMemo(() => getWinner(board), [board])
   const draw = useMemo(() => isDraw(board), [board])
   const gameOver = Boolean(winner) || draw
   const initializedRef = useRef<boolean>(false)
   const endgameAnnouncedRef = useRef<boolean>(false)
   const lastHumanMoveRef = useRef<number | null>(null)
+  const consoleRef = useRef<HTMLDivElement | null>(null)
 
   function enqueueMessage(text: string) {
     setMessages((prev) => [...prev, text])
+    // Defer scroll to next microtask so DOM has rendered the new line
+    queueMicrotask(() => {
+      const el = consoleRef.current
+      if (el) {
+        el.scrollTop = el.scrollHeight
+      }
+    })
   }
+
+  useEffect(() => {
+    const el = consoleRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [isThinking])
 
   function handleClick(index: number) {
     if (gameOver || board[index]) return
@@ -78,6 +92,7 @@ function App() {
     if (gameOver || current !== 'O') return
     let cancelled = false
     ;(async () => {
+      setIsThinking(true)
       const move = chooseMove(board, 'O')
       const message = await getWoprMessage('move', {
         board,
@@ -94,9 +109,11 @@ function App() {
         setCurrent('X')
         enqueueMessage(message)
       }
+      setIsThinking(false)
     })()
     return () => {
       cancelled = true
+      setIsThinking(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [board, current, gameOver])
@@ -110,6 +127,7 @@ function App() {
     if (endgameAnnouncedRef.current) return
     endgameAnnouncedRef.current = true
     ;(async () => {
+      setIsThinking(true)
       const message = await getWoprMessage('end', {
         board,
         nextPlayer: current,
@@ -118,6 +136,7 @@ function App() {
         previousMessages: messages,
       })
       enqueueMessage(message)
+      setIsThinking(false)
     })()
   }, [gameOver, winner, draw])
 
@@ -133,13 +152,20 @@ function App() {
       <div className="playfield">
       <section className="console" aria-label="WOPR console output">
         <header className="console-header">WOPR</header>
-        <div className="console-screen">
+        <div className="console-screen" ref={consoleRef}>
           {messages.map((m, i) => (
             <div key={i} className="console-line">
               <span className="prompt">{'>'}</span> {m}
             </div>
           ))}
-          <div className="console-cursor" aria-hidden="true">_</div>
+          <div className="console-cursorline">
+            <span className="prompt">{'>'}</span>{' '}
+            {isThinking ? (
+              <span className="console-thinking">WOPR is thinking…</span>
+            ) : (
+              <span className="console-cursor" aria-hidden="true">_</span>
+            )}
+          </div>
         </div>
       </section>
 

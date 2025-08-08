@@ -105,6 +105,7 @@ h1 {
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
+  scroll-behavior: smooth;
 }
 
 .console-line .prompt {
@@ -128,6 +129,14 @@ h1 {
   color: var(--wopr-amber);
 }
 
+.console-cursorline {
+  margin-top: 4px;
+}
+
+.console-thinking {
+  color: var(--wopr-text-dim);
+}
+
 /* Responsive layout: stack on small screens, side-by-side on desktop */
 .playfield {
   margin-top: 12px;
@@ -146,5 +155,11 @@ h1 {
     max-width: 520px;
     width: 316px;
     height: 316px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .console-screen::-webkit-scrollbar {
+    display: none; /* Hides the scrollbar */
   }
 }
