@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { chooseMove } from './wopr/ai'
+import { getWoprMessage } from './wopr/messages'
 
 type Player = 'X' | 'O'
 type Cell = Player | null
@@ -39,6 +40,7 @@ function App() {
   const gameOver = Boolean(winner) || draw
   const initializedRef = useRef<boolean>(false)
   const endgameAnnouncedRef = useRef<boolean>(false)
+  const lastHumanMoveRef = useRef<number | null>(null)
 
   function enqueueMessage(text: string) {
     setMessages((prev) => [...prev, text])
@@ -51,6 +53,9 @@ function App() {
     const nextPlayer: Player = current === 'X' ? 'O' : 'X'
     setBoard(nextBoard)
     setCurrent(nextPlayer)
+    if (current === 'X') {
+      lastHumanMoveRef.current = index
+    }
   }
 
   function startNewGame() {
@@ -71,13 +76,27 @@ function App() {
   // Trigger AI move when it's AI's turn
   useEffect(() => {
     if (gameOver || current !== 'O') return
-    const move = chooseMove(board, 'O')
-    if (move != null) {
-      const next = board.slice()
-      next[move] = 'O'
-      setBoard(next)
-      setCurrent('X')
-      enqueueMessage('Processing... Move complete.')
+    let cancelled = false
+    ;(async () => {
+      const move = chooseMove(board, 'O')
+      const message = await getWoprMessage('move', {
+        board,
+        nextPlayer: 'O',
+        chosenMoveIndex: move ?? undefined,
+        previousMessages: messages,
+        lastHumanMoveIndex: lastHumanMoveRef.current ?? undefined,
+      })
+      if (cancelled) return
+      if (move != null) {
+        const next = board.slice()
+        next[move] = 'O'
+        setBoard(next)
+        setCurrent('X')
+        enqueueMessage(message)
+      }
+    })()
+    return () => {
+      cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [board, current, gameOver])
@@ -90,13 +109,16 @@ function App() {
     }
     if (endgameAnnouncedRef.current) return
     endgameAnnouncedRef.current = true
-    if (winner === 'O') {
-      enqueueMessage('Victory assured. Thank you for a stimulating game.')
-    } else if (winner === 'X') {
-      enqueueMessage('Improbable outcome. You have prevailed this time.')
-    } else if (draw) {
-      enqueueMessage('A strange game. The only winning move is not to play.')
-    }
+    ;(async () => {
+      const message = await getWoprMessage('end', {
+        board,
+        nextPlayer: current,
+        winner,
+        draw,
+        previousMessages: messages,
+      })
+      enqueueMessage(message)
+    })()
   }, [gameOver, winner, draw])
 
   return (
