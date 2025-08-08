@@ -136,62 +136,68 @@ function App() {
         previousMessages: messages,
       })
       enqueueMessage(message)
+      enqueueMessage('Would you like to play another game?')
       setIsThinking(false)
     })()
   }, [gameOver, winner, draw])
 
   return (
     <div className="container">
-      <h1>WOPR</h1>
-      <p className="subtitle">A web-based AI-powered tic‑tac‑toe</p>
-
-      <div className="controls">
-        <button onClick={startNewGame}>Reset</button>
-      </div>
+      <h1>W.O.P.R.</h1>
+      <p className="subtitle">Web-based Online Play Reciprocator</p>
 
       <div className="playfield">
-      <section className="console" aria-label="WOPR console output">
-        <header className="console-header">WOPR</header>
-        <div className="console-screen" ref={consoleRef}>
-          {messages.map((m, i) => (
-            <div key={i} className="console-line">
-              <span className="prompt">{'>'}</span> {m}
-            </div>
-          ))}
-          <div className="console-cursorline">
-            <span className="prompt">{'>'}</span>{' '}
-            {isThinking ? (
-              <span className="console-thinking">WOPR is thinking…</span>
-            ) : (
-              <span className="console-cursor" aria-hidden="true">_</span>
-            )}
+        <div className="board-wrap">
+          <div className="board">
+            {board.map((cell, idx) => (
+              <button
+                key={idx}
+                className="cell"
+                data-value={cell ?? ''}
+                onClick={() => handleClick(idx)}
+                disabled={Boolean(cell) || gameOver || current === 'O'}
+                aria-label={`Cell ${idx + 1}`}
+              >
+                {cell}
+              </button>
+            ))}
           </div>
         </div>
-      </section>
 
-      <div className="board">
-        {board.map((cell, idx) => (
-          <button
-            key={idx}
-            className="cell"
-            data-value={cell ?? ''}
-            onClick={() => handleClick(idx)}
-            disabled={Boolean(cell) || gameOver || current === 'O'}
-            aria-label={`Cell ${idx + 1}`}
-          >
-            {cell}
-          </button>
-        ))}
-      </div>
+        <section className="console" aria-label="WOPR console output">
+          <header className="console-header">WOPR</header>
+          <div className="console-screen" ref={consoleRef}>
+            {messages.map((m, i) => (
+              <div key={i} className="console-line">
+                <span className="prompt">{'>'}</span> {m}
+              </div>
+            ))}
+            <div className="console-cursorline">
+              <span className="prompt">{'>'}</span>{' '}
+              {isThinking ? (
+                <span className="console-thinking">WOPR is thinking…</span>
+              ) : (
+                <span className="console-cursor" aria-hidden="true">_</span>
+              )}
+            </div>
+          </div>
+        </section>
+
+
       </div>
 
       <div className="status" role="status" aria-live="polite">
         {winner && <span>Winner: {winner}</span>}
         {!winner && draw && <span>Draw</span>}
         {!gameOver && <span>Next: {current}</span>}
+        {gameOver && (
+          <div style={{ marginTop: '8px' }}>
+            <button onClick={startNewGame}>Play Again</button>
+          </div>
+        )}
       </div>
 
-      <footer className="footer">WOPR v0 — Make your move</footer>
+      {/* Footer removed for mobile-first layout */}
     </div>
   )
 }
