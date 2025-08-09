@@ -27,6 +27,8 @@ jobs:
       
       - name: Build React app
         run: npm run build
+        env:
+          REACT_APP_APIKey: ${{ secrets.REACT_APP_APIKey }}
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
