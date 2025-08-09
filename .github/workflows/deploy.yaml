@@ -28,7 +28,8 @@ jobs:
       - name: Build React app
         run: npm run build
         env:
-          REACT_APP_APIKey: ${{ secrets.REACT_APP_APIKey }}
+          # Vite only exposes variables prefixed with VITE_
+          VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
