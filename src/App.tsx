@@ -146,45 +146,39 @@ function App() {
       <h1>W.O.P.R.</h1>
       <p className="subtitle">Web-based Online Play Reciprocator</p>
 
-      <div className="playfield">
-        <div className="board-wrap">
-          <div className="board">
-            {board.map((cell, idx) => (
-              <button
-                key={idx}
-                className="cell"
-                data-value={cell ?? ''}
-                onClick={() => handleClick(idx)}
-                disabled={Boolean(cell) || gameOver || current === 'O'}
-                aria-label={`Cell ${idx + 1}`}
-              >
-                {cell}
-              </button>
-            ))}
+      <div className="board">
+        {board.map((cell, idx) => (
+          <button
+            key={idx}
+            className="cell"
+            data-value={cell ?? ''}
+            onClick={() => handleClick(idx)}
+            disabled={Boolean(cell) || gameOver || current === 'O'}
+            aria-label={`Cell ${idx + 1}`}
+          >
+            {cell}
+          </button>
+        ))}
+      </div>
+
+      <section className="console" aria-label="WOPR console output">
+        <header className="console-header">WOPR</header>
+        <div className="console-screen" ref={consoleRef}>
+          {messages.map((m, i) => (
+            <div key={i} className="console-line">
+              <span className="prompt">{'>'}</span> {m}
+            </div>
+          ))}
+          <div className="console-cursorline">
+            <span className="prompt">{'>'}</span>{' '}
+            {isThinking ? (
+              <span className="console-thinking">WOPR is thinking…</span>
+            ) : (
+              <span className="console-cursor" aria-hidden="true">_</span>
+            )}
           </div>
         </div>
-
-        <section className="console" aria-label="WOPR console output">
-          <header className="console-header">WOPR</header>
-          <div className="console-screen" ref={consoleRef}>
-            {messages.map((m, i) => (
-              <div key={i} className="console-line">
-                <span className="prompt">{'>'}</span> {m}
-              </div>
-            ))}
-            <div className="console-cursorline">
-              <span className="prompt">{'>'}</span>{' '}
-              {isThinking ? (
-                <span className="console-thinking">WOPR is thinking…</span>
-              ) : (
-                <span className="console-cursor" aria-hidden="true">_</span>
-              )}
-            </div>
-          </div>
-        </section>
-
-
-      </div>
+      </section>
 
       <div className="status" role="status" aria-live="polite">
         {winner && <span>Winner: {winner}</span>}
