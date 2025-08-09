@@ -60,7 +60,6 @@ h1 {
   place-items: center;
   display: flex;
   justify-content: center;
-  color: white;
 }
 
 .cell:disabled {
@@ -74,6 +73,12 @@ h1 {
 .footer {
   margin-top: 1rem;
   color: #9aa0a6;
+}
+
+.crt-text {
+  color: white;
+  /* For text: */
+  text-shadow: 0 0 5px white;
 }
 
 /* --- WOPR console output --- */

@@ -36,6 +36,7 @@ function App() {
   const [current, setCurrent] = useState<Player>('X')
   const [messages, setMessages] = useState<string[]>([])
   const [isThinking, setIsThinking] = useState<boolean>(false)
+  const [awaitingReplayChoice, setAwaitingReplayChoice] = useState<boolean>(false)
   const winner = useMemo(() => getWinner(board), [board])
   const draw = useMemo(() => isDraw(board), [board])
   const gameOver = Boolean(winner) || draw
@@ -75,8 +76,9 @@ function App() {
   function startNewGame() {
     setBoard(Array(9).fill(null))
     setCurrent('X')
-    setMessages(["Would you like to play a game?"])
+    setMessages(["Let's play a nice game of tic-tac-toe. Your move, human."])
     endgameAnnouncedRef.current = false
+    setAwaitingReplayChoice(false)
   }
 
   // Initialize once (guarded for StrictMode double effect runs)
@@ -137,20 +139,21 @@ function App() {
       })
       enqueueMessage(message)
       enqueueMessage('Would you like to play another game?')
+      setAwaitingReplayChoice(true)
       setIsThinking(false)
     })()
   }, [gameOver, winner, draw])
 
   return (
     <div className="container">
-      <h1>W.O.P.R.</h1>
-      <p className="subtitle">Web-based Online Play Reciprocator</p>
+      <h1 className="crt-text">W.O.P.R.</h1>
+      <p className="subtitle crt-text">Web-based Online Play Reciprocator</p>
 
       <div className="board">
         {board.map((cell, idx) => (
           <button
             key={idx}
-            className="cell"
+            className="cell crt-text"
             data-value={cell ?? ''}
             onClick={() => handleClick(idx)}
             disabled={Boolean(cell) || gameOver || current === 'O'}
@@ -161,11 +164,17 @@ function App() {
         ))}
       </div>
 
+      <div className="status crt-text" role="status" aria-live="polite">
+        {winner && <span>Winner: {winner}</span>}
+        {!winner && draw && <span>Draw</span>}
+        {!gameOver && <span>Next: {current}</span>}
+      </div>
+
       <section className="console" aria-label="WOPR console output">
         <header className="console-header">WOPR</header>
         <div className="console-screen" ref={consoleRef}>
           {messages.map((m, i) => (
-            <div key={i} className="console-line">
+            <div key={i} className="console-line crt-text">
               <span className="prompt">{'>'}</span> {m}
             </div>
           ))}
@@ -173,25 +182,31 @@ function App() {
             <span className="prompt">{'>'}</span>{' '}
             {isThinking ? (
               <span className="console-thinking">WOPR is thinking…</span>
+            ) : awaitingReplayChoice ? (
+              <span className="console-options" role="group" aria-label="Play another game?">
+                <button
+                  onClick={() => {
+                    setAwaitingReplayChoice(false)
+                    startNewGame()
+                  }}
+                >
+                  Y
+                </button>{' '}
+                <button
+                  onClick={() => {
+                    enqueueMessage('A strange game. The only winning move is not to play.')
+                    setAwaitingReplayChoice(false)
+                  }}
+                >
+                  N
+                </button>
+              </span>
             ) : (
               <span className="console-cursor" aria-hidden="true">_</span>
             )}
           </div>
         </div>
       </section>
-
-      <div className="status" role="status" aria-live="polite">
-        {winner && <span>Winner: {winner}</span>}
-        {!winner && draw && <span>Draw</span>}
-        {!gameOver && <span>Next: {current}</span>}
-        {gameOver && (
-          <div style={{ marginTop: '8px' }}>
-            <button onClick={startNewGame}>Play Again</button>
-          </div>
-        )}
-      </div>
-
-      {/* Footer removed for mobile-first layout */}
     </div>
   )
 }
