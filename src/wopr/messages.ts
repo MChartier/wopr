@@ -44,6 +44,7 @@ export async function getWoprMessage(
     'COHESION: Maintain continuity with your prior lines and build naturally on the conversation so far. Avoid repeating the same phrasing.',
     "TOPIC: Address the human's previous move and briefly motivate your response.",
     'ATTITUDE: Confident but not cocky. You are a computer with nothing to prove. Acknowledge when victory is impossible.',
+    'CONTENT: Do not merely describe the move that just took place. Instead, use the move to motivate your response. Comment on the state of the game, and what is happening. Engage with the opponent.',
   ].join(' ')
 
   const boardAscii = renderBoard(params.board)
