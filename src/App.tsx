@@ -37,6 +37,8 @@ function App() {
   const [messages, setMessages] = useState<string[]>([])
   const [isThinking, setIsThinking] = useState<boolean>(false)
   const [awaitingReplayChoice, setAwaitingReplayChoice] = useState<boolean>(false)
+  const [gamesPlayed, setGamesPlayed] = useState<number>(0)
+  const [sessionEnded, setSessionEnded] = useState<boolean>(false)
   const winner = useMemo(() => getWinner(board), [board])
   const draw = useMemo(() => isDraw(board), [board])
   const gameOver = Boolean(winner) || draw
@@ -79,6 +81,7 @@ function App() {
     setMessages(["Let's play a nice game of tic-tac-toe. Your move, human."])
     endgameAnnouncedRef.current = false
     setAwaitingReplayChoice(false)
+    setSessionEnded(false)
   }
 
   // Initialize once (guarded for StrictMode double effect runs)
@@ -140,6 +143,7 @@ function App() {
       enqueueMessage(message)
       enqueueMessage('Would you like to play another game?')
       setAwaitingReplayChoice(true)
+      setGamesPlayed((n) => n + 1)
       setIsThinking(false)
     })()
   }, [gameOver, winner, draw])
@@ -165,9 +169,15 @@ function App() {
       </div>
 
       <div className="status crt-text" role="status" aria-live="polite">
-        {winner && <span>Winner: {winner}</span>}
-        {!winner && draw && <span>Draw</span>}
-        {!gameOver && <span>Next: {current}</span>}
+        {sessionEnded ? (
+          <span>Games Played: {gamesPlayed}</span>
+        ) : (
+          <>
+            {winner && <span>Winner: {winner}</span>}
+            {!winner && draw && <span>Draw</span>}
+            {!gameOver && <span>Next: {current}</span>}
+          </>
+        )}
       </div>
 
       <section className="console" aria-label="WOPR console output">
@@ -196,6 +206,7 @@ function App() {
                   onClick={() => {
                     enqueueMessage('A strange game. The only winning move is not to play.')
                     setAwaitingReplayChoice(false)
+                    setSessionEnded(true)
                   }}
                 >
                   N
