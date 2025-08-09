@@ -211,6 +211,10 @@ h1 {
   height: 100%;
 }
 
+.board {
+  max-width: 420px;
+}
+
 @media (min-width: 800px) {
   .playfield {
     display: grid;
