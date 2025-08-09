@@ -39,6 +39,11 @@ function App() {
   const [awaitingReplayChoice, setAwaitingReplayChoice] = useState<boolean>(false)
   const [gamesPlayed, setGamesPlayed] = useState<number>(0)
   const [sessionEnded, setSessionEnded] = useState<boolean>(false)
+  const [phase, setPhase] = useState<'connect' | 'game' | 'terminated'>('connect')
+  const [typedText, setTypedText] = useState<string>('')
+  const [showIntroOptions, setShowIntroOptions] = useState<boolean>(false)
+  const [isWiping, setIsWiping] = useState<boolean>(false)
+  const [pendingIntroMessage, setPendingIntroMessage] = useState<boolean>(false)
   const winner = useMemo(() => getWinner(board), [board])
   const draw = useMemo(() => isDraw(board), [board])
   const gameOver = Boolean(winner) || draw
@@ -75,10 +80,14 @@ function App() {
     }
   }
 
-  function startNewGame() {
+  function startNewGame(deferIntroMessage?: boolean) {
     setBoard(Array(9).fill(null))
     setCurrent('X')
-    setMessages(["Let's play a nice game of tic-tac-toe. Your move, human."])
+    if (deferIntroMessage) {
+      setMessages([])
+    } else {
+      setMessages(["Let's play a nice game of tic-tac-toe. Your move, human."])
+    }
     endgameAnnouncedRef.current = false
     setAwaitingReplayChoice(false)
     setSessionEnded(false)
@@ -88,13 +97,38 @@ function App() {
   useEffect(() => {
     if (initializedRef.current) return
     initializedRef.current = true
-    startNewGame()
+    // Do not start game immediately; show connection intro first
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Trigger AI move when it's AI's turn
+  // Connection intro: type out the greeting, then show options
   useEffect(() => {
-    if (gameOver || current !== 'O') return
+    if (phase !== 'connect') return
+    const full = 'Would you like to play a game?'
+    setTypedText('')
+    setShowIntroOptions(false)
+    let cancelled = false
+    let idx = 0
+    const interval = setInterval(() => {
+      if (cancelled) return
+      idx += 1
+      setTypedText(full.slice(0, idx))
+      if (idx >= full.length) {
+        clearInterval(interval)
+        setTimeout(() => {
+          if (!cancelled) setShowIntroOptions(true)
+        }, 1000)
+      }
+    }, 50)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [phase])
+
+  // Trigger AI move when it's AI's turn (only during gameplay phase)
+  useEffect(() => {
+    if (phase !== 'game' || gameOver || current !== 'O') return
     let cancelled = false
     ;(async () => {
       setIsThinking(true)
@@ -121,10 +155,11 @@ function App() {
       setIsThinking(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [board, current, gameOver])
+  }, [board, current, gameOver, phase])
 
-  // Endgame commentary
+  // Endgame commentary (only during gameplay phase)
   useEffect(() => {
+    if (phase !== 'game') return
     if (!gameOver) {
       endgameAnnouncedRef.current = false
       return
@@ -146,10 +181,63 @@ function App() {
       setGamesPlayed((n) => n + 1)
       setIsThinking(false)
     })()
-  }, [gameOver, winner, draw])
+  }, [gameOver, winner, draw, phase])
+
+  if (phase !== 'game') {
+    return (
+      <div className="intro-screen">
+        <div className="intro-center">
+          <div className="intro-line crt-text">
+            <span className="prompt">{'>'}</span> {typedText}
+            {phase === 'connect' && typedText && typedText.length < 'Would you like to play a game?'.length ? (
+              <span className="console-cursor" aria-hidden="true">_</span>
+            ) : null}
+          </div>
+          {phase === 'connect' && showIntroOptions && (
+            <div className="intro-buttons" role="group" aria-label="Connect?">
+              <button
+                className="crt-text"
+                onClick={() => {
+                  setIsWiping(true)
+                  setPhase('game')
+                  startNewGame(true)
+                  setPendingIntroMessage(true)
+                }}
+              >
+                Y
+              </button>
+              <button
+                className="crt-text"
+                onClick={() => {
+                  setShowIntroOptions(false)
+                  setTypedText('CONNECTION TERMINATED')
+                  setPhase('terminated')
+                }}
+              >
+                N
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container">
+      {isWiping && (
+        <div
+          className="wipe-overlay"
+          aria-hidden="true"
+          onAnimationEnd={() => {
+            if (pendingIntroMessage) {
+              enqueueMessage("Let's play a nice game of tic-tac-toe. Your move, human.")
+              setPendingIntroMessage(false)
+            }
+            setIsWiping(false)
+          }}
+        />
+      )}
       <h1 className="crt-text">W.O.P.R.</h1>
       <p className="subtitle crt-text">Web-based Online Play Reciprocator</p>
 
@@ -160,7 +248,7 @@ function App() {
             className="cell crt-text"
             data-value={cell ?? ''}
             onClick={() => handleClick(idx)}
-            disabled={Boolean(cell) || gameOver || current === 'O'}
+            disabled={Boolean(cell) || gameOver || current === 'O' || isWiping}
             aria-label={`Cell ${idx + 1}`}
           >
             {cell}
