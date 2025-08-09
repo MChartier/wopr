@@ -185,7 +185,7 @@ function App() {
 
   if (phase !== 'game') {
     return (
-      <div className="intro-screen">
+      <div className="intro-screen crt-effect">
         <div className="intro-center">
           <div className="intro-line crt-text">
             <span className="prompt">{'>'}</span> {typedText}
@@ -224,7 +224,7 @@ function App() {
   }
 
   return (
-    <div className="container">
+    <div className="container crt-effect">
       {isWiping && (
         <div
           className="wipe-overlay"
@@ -238,7 +238,7 @@ function App() {
           }}
         />
       )}
-      <h1 className="crt-text">W.O.P.R.</h1>
+      <h1 className="crt-text">WOPR</h1>
       <p className="subtitle crt-text">Web-based Online Play Reciprocator</p>
 
       <div className="board">
